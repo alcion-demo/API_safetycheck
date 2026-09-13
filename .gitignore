@@ -1,0 +1,4 @@
+.devcontainer/
+.git/
+data/
+my.cnf/

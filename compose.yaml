@@ -1,0 +1,60 @@
+services:
+
+  app:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: safety_php
+    volumes:
+      - ./backend:/var/www/html
+      - .:/workspaces/API_safetycheck
+    working_dir: /var/www/html/
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: safety_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  node:
+    image: node:22-alpine
+    container_name: safety_node
+    working_dir: /var/www/frontend
+    volumes:
+      - ./frontend:/var/www/frontend
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0
+
+  db:
+    image: mysql:8.0
+    container_name: safety_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: safety
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: safety
+      MYSQL_PASSWORD: safety
+      TZ: Asia/Tokyo
+    volumes:
+      - ./data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: safety_phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: safety
+      PMA_PASSWORD: safety
+    ports:
+      - "4040:80"
+    depends_on:
+      - db
