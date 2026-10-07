@@ -13,7 +13,7 @@
 <img alt="Static Badge" src="https://img.shields.io/badge/npm-n?style=plastic&logo=npm&logoColor=%23ffffff&labelColor=%23CB3837&color=%23CB3837">  
 
 ## プロジェクト概要
-このリポジトリは、バックエンドに Laravel、フロントエンドに React + TypeScript + Vite を持つ SPA 型の買い物支援アプリケーションです。
+このリポジトリは、バックエンドに Laravel、フロントエンドに React + TypeScript + Vite を持つ SPA 型の安否確認アプリケーションです。
 
 確認できた実装の軸は次の通りです。
 
@@ -69,6 +69,8 @@ chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 composer require laravel/sanctum
 php artisan install:api
+composer require spatie/laravel-permission
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
 ```
 #### 3. 認証packcageの導入
 ```
