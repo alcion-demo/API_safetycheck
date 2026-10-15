@@ -67,15 +67,15 @@ docker compose exec app ash
 composer create-project laravel/laravel .
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
+```
+#### 3. 認証・認可packcageの導入
+```
 composer require laravel/sanctum
 php artisan install:api
-composer require spatie/laravel-permission
-php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
-```
-#### 3. 認証packcageの導入
-```
 composer require laravel/fortify
 php artisan fortify:install
+composer require spatie/laravel-permission
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
 ```
 ### 4. フロントエンド初期化
 ```
@@ -107,8 +107,10 @@ cp -r ./vendor/laravel-lang/lang/src/ja ./lang/
 
 #### 8. その他(フロントエンド)
 ```
+docker compose exec node sh
 npm install axios
 npm list axios
+npm list react-router-dom
 ```
 
 #### 9. 認証の設定(バックエンド)
@@ -119,6 +121,20 @@ php artisan config:publish cors
 ```
     'allowed_origins' => ['http://localhost:5173'],
     'supports_credentials' => true,
+```
+
+#### 10. メール設定(gmailの場合)  
+- セキュリティで2段階認証をonにする  
+- .env下記内容を修正
+```
+MAIL_MAILER=smtp
+MAIL_SCHEME=null
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_USERNAME=受信先のメールアドレス
+MAIL_PASSWORD=アプリパスワード
+MAIL_ENCRYPTION=ssl
+MAIL_FROM_ADDRESS="送信元のメールアドレス"
 ```
 
 ## ディレクトリ構成（主要部分）後で書き直す

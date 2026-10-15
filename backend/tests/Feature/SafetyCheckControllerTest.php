@@ -26,6 +26,7 @@ class SafetyCheckControllerTest extends TestCase
         $user = User::factory()->create();
 
         SafetyCheck::create([
+            'type' => 'training',
             'title' => 'テスト安否確認',
             'message' => 'テストメッセージです。',
             'status' => 'active',

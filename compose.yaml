@@ -12,6 +12,34 @@ services:
     depends_on:
       - db
 
+  scheduler:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: safety_scheduler
+    volumes:
+      - ./backend:/var/www/html
+      - .:/workspaces/API_safetycheck
+    working_dir: /var/www/html/
+    depends_on:
+      db:
+          condition: service_healthy
+    command: php artisan schedule:work
+
+  queue:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: safety_queue
+    volumes:
+      - ./backend:/var/www/html
+      - .:/workspaces/API_safetycheck
+    working_dir: /var/www/html/
+    depends_on:
+      db:
+          condition: service_healthy
+    command: php artisan queue:work
+
   nginx:
     image: nginx:1.25-alpine
     container_name: safety_nginx
@@ -46,6 +74,11 @@ services:
       TZ: Asia/Tokyo
     volumes:
       - ./data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "safety", "-psafety"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
