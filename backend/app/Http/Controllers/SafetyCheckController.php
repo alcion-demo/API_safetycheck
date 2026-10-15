@@ -80,4 +80,27 @@ class SafetyCheckController extends Controller
         //
     }
 
+    /**
+     * 訓練開始状態の設定
+     *
+     * @param string $id
+     * @return void
+     */
+    public function activate(string $id)
+    {
+        $safetyCheck = $this->safetycheck->findOrFail($id);
+
+        if ($safetyCheck->type !== 'training') {
+            abort(422, '訓練の安否確認のみ開始できます。');
+        }
+
+        if ($safetyCheck->status !== 'scheduled') {
+            abort(422, '予約中の安否確認のみ開始できます。');
+        }
+
+        $safetyCheck->activateTraining();
+
+        return response()->json($safetyCheck);
+    }
+
 }

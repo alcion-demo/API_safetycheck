@@ -3,9 +3,17 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SafetyCheckController;
+use App\Http\Controllers\UserController;
 
 Route::get('/user', function (Request $request) {
-    return $request->user();
+    $user = $request->user();
+
+    return response()->json([
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'roles' => $user->getRoleNames(),
+    ]);
 })->middleware('auth:sanctum');
 
 Route::post('/safety-checks/test', function (Request $request) {
@@ -22,3 +30,11 @@ Route::post('/safety-checks/test', function (Request $request) {
 Route::apiResource('safety-checks', SafetyCheckController::class)
     ->only(['index', 'store', 'update'])
     ->middleware('auth:sanctum');
+
+Route::post(
+    'safety-checks/{id}/activate', [SafetyCheckController::class, 'activate'])
+    ->middleware(['auth:sanctum', 'role:admin']);
+
+Route::apiResource('users', UserController::class)
+    ->only(['index', 'store', 'update', 'destroy'])
+    ->middleware(['auth:sanctum', 'role:admin']);

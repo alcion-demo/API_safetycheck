@@ -20,6 +20,12 @@ class SafetyCheck extends Model
     ];
 
 
+    /**
+     * 訓練用安否確認作成
+     *
+     * @param array $data
+     * @return self
+     */
     public function createTraining(array $data): self
     {
         return self::create([
@@ -31,6 +37,26 @@ class SafetyCheck extends Model
         ]);
     }
 
+    /**
+     * 訓練用安否確認開始状態の設定
+     *
+     * @return void
+     */
+    public function activateTraining(): void
+    {
+        $this->update([
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+    }
+
+
+    /**
+     * 訓練用安否確認編集
+     *
+     * @param array $data
+     * @return void
+     */
     public function updateTraining(array $data): void
     {
         $this->update($data);
