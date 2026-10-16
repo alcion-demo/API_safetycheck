@@ -5,7 +5,7 @@ type Props = {
   onEdit: (user: User) => void
   onDelete: (user: User) => void
 }
-
+//PC・タブレット用
 const UserTable = ({ users, onEdit, onDelete }: Props) => {
   return (
     <div className="user-table-wrapper desktop-user-list">

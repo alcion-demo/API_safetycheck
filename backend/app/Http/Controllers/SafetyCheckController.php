@@ -43,14 +43,6 @@ class SafetyCheckController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(UpdateSafetyCheckRequest $request, string $id)
@@ -77,7 +69,21 @@ class SafetyCheckController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $safetyCheck = $this->safetycheck->findOrFail($id);
+
+        if ($safetyCheck->type !== 'training') {
+            abort(422, '訓練の安否確認のみ削除できます。');
+        }
+
+        if ($safetyCheck->status !== 'closed') {
+            abort(422, '終了済みの訓練のみ削除できます。');
+        }
+
+        $safetyCheck->delete();
+
+        return response()->json([
+            'message' => '訓練履歴を削除しました。',
+        ]);
     }
 
     /**
@@ -99,6 +105,29 @@ class SafetyCheckController extends Controller
         }
 
         $safetyCheck->activateTraining();
+
+        return response()->json($safetyCheck->fresh());
+    }
+
+    
+    /**
+     * 訓練用安否確認を終了する
+     */
+    public function close(string $id)
+    {
+        $safetyCheck = $this->safetycheck->findOrFail($id);
+
+        // 訓練以外は終了できない
+        if ($safetyCheck->type !== 'training') {
+            abort(422, '訓練の安否確認のみ終了できます。');
+        }
+
+        // 実施中の訓練のみ終了できる
+        if ($safetyCheck->status !== 'active') {
+            abort(422, '実施中の訓練のみ終了できます。');
+        }
+
+        $safetyCheck->closeTraining();
 
         return response()->json($safetyCheck);
     }

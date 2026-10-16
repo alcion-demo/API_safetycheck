@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SafetyCheckNotification;
 
 #[Fillable(['type', 'title', 'message', 'scheduled_at', 'status', 'started_at', 'ended_at',])]
 class SafetyCheck extends Model
@@ -48,8 +50,33 @@ class SafetyCheck extends Model
             'status' => 'active',
             'started_at' => now(),
         ]);
+
+        $users = User::all();
+
+        User::whereNotNull('email')
+            ->where('email', '!=', '')
+            ->each(function (User $user) {
+                Mail::to($user->email)->queue(
+                    new SafetyCheckNotification(
+                        $this->title,
+                        $this->message
+                    )
+                );
+            });
     }
 
+    /**
+     * 訓練用安否確認の終了
+     *
+     * @return void
+     */
+    public function closeTraining(): void
+    {
+        $this->update([
+            'status' => 'closed',
+            'ended_at' => now(),
+        ]);
+    }
 
     /**
      * 訓練用安否確認編集

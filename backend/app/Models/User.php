@@ -36,21 +36,31 @@ class User extends Authenticatable
     /**
      * ユーザー一覧を取得する
      *
+     * @param string|null $search
      * @return LengthAwarePaginator
      */
-    public function getUserList(): LengthAwarePaginator
+    public function getUserList(?string $search = null): LengthAwarePaginator
     {
-        return self::query()
+        $query = self::query()
             ->select([
                 'id',
                 'name',
                 'email',
                 'created_at',
             ])
-            ->with('roles:id,name') //Eager Loading
+            ->with('roles:id,name'); //Eager Loading
+
+        if ($search !== null && $search !== '') {
+            $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        return $query
             ->orderBy('id')
-            ->orderBy('id')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
     }
 
     /**

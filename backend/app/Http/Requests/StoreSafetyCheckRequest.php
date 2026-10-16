@@ -38,8 +38,10 @@ class StoreSafetyCheckRequest extends FormRequest
             'type' => ['required', 'in:training,production'],
             'scheduled_at' => [
                 'nullable',
-                'date_format:Y-m-d H:i:s',
                 'required_if:type,training',
+                'date',
+                'date_format:Y-m-d H:i:s',
+                'after_or_equal:today'
             ],
         ];
     }
@@ -55,7 +57,8 @@ class StoreSafetyCheckRequest extends FormRequest
             'type.required' => '種別を指定してください。',
             'type.in' => '種別はtrainingまたはproductionを指定してください。',
             'scheduled_at.required_if' => '訓練の場合は日時を指定してください。',
-            'scheduled_at.date_format' => '日時はY-m-d H:i:s形式で指定してください。'
+            'scheduled_at.date_format' => '日時はY-m-d H:i:s形式で指定してください。',
+            'scheduled_at.after_or_equal' => ':attribute には今日以降の日付を入力してください。',
         ];
     }
 }

@@ -6,6 +6,7 @@ type Props = {
   onDelete: (user: User) => void
 }
 
+//mobile用
 const UserCardList = ({ users, onEdit, onDelete }: Props) => {
   return (
     <div className="mobile-user-list">

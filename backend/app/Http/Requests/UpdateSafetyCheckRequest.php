@@ -39,6 +39,7 @@ class UpdateSafetyCheckRequest extends FormRequest
                 'sometimes',
                 'required',
                 'date_format:Y-m-d H:i:s',
+                'after_or_equal:today'
             ],
         ];
     }
@@ -51,8 +52,14 @@ class UpdateSafetyCheckRequest extends FormRequest
     public function messages()
     {
         return [
-            'scheduled_at.required_if' => '訓練の場合は日時を指定してください。',
-            'scheduled_at.date_format' => '日時はY-m-d H:i:s形式で指定してください。'
+        'title.required' => '題名を入力してください。',
+        'title.string' => '題名は文字列で入力してください。',
+        'title.max' => '題名は255文字以内で入力してください。',
+        'message.required' => '本文を入力してください。',
+        'message.string' => '本文は文字列で入力してください。',
+        'scheduled_at.required' => '日時を指定してください。',
+        'scheduled_at.date_format' => '日時はY-m-d H:i:s形式で指定してください。',
+        'scheduled_at.after_or_equal' => ':attribute には今日以降の日付を入力してください。',
         ];
     }
 }
