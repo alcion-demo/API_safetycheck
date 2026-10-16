@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SafetyCheckController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/user', function (Request $request) {
     $user = $request->user();
@@ -15,6 +16,16 @@ Route::get('/user', function (Request $request) {
         'roles' => $user->getRoleNames(),
     ]);
 })->middleware('auth:sanctum');
+
+
+Route::apiResource('users', UserController::class)
+    ->only(['index', 'store', 'update', 'destroy'])
+    ->middleware(['auth:sanctum', 'role:admin']);
+
+
+Route::patch('/profile', [ProfileController::class, 'update'])
+    ->middleware('auth:sanctum');
+
 
 Route::post('/safety-checks/test', function (Request $request) {
     abort_unless(
@@ -28,13 +39,13 @@ Route::post('/safety-checks/test', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::apiResource('safety-checks', SafetyCheckController::class)
-    ->only(['index', 'store', 'update'])
+    ->only(['index', 'store', 'update', 'destroy'])
     ->middleware('auth:sanctum');
 
 Route::post(
     'safety-checks/{id}/activate', [SafetyCheckController::class, 'activate'])
     ->middleware(['auth:sanctum', 'role:admin']);
 
-Route::apiResource('users', UserController::class)
-    ->only(['index', 'store', 'update', 'destroy'])
+Route::post(
+    'safety-checks/{id}/close', [SafetyCheckController::class, 'close'])
     ->middleware(['auth:sanctum', 'role:admin']);

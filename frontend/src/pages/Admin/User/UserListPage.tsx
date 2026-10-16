@@ -9,6 +9,7 @@ import axios from 'axios'
 const UserListPage = () => {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -95,21 +96,25 @@ const UserListPage = () => {
     }
   }
 
+
   useEffect(() => {
     const fetchUsers = async () => {
+      setError('')
+
       try {
-        const response = await api.get<PaginatedUsers>('/api/users')
+        const response = await api.get<PaginatedUsers>('/api/users', {
+          params: {
+            search: search,
+          },
+        })
+
         setUsers(response.data.data)
-      } catch  (error) {
+      } catch (error) {
         if (axios.isAxiosError(error)) {
           console.log('status:', error.response?.status)
           console.log('response:', error.response?.data)
-
-          if (error.response?.status === 422) {
-            setValidationErrors(error.response.data.errors ?? {})
-            return
-          }
         }
+
         setError('ユーザー一覧の取得に失敗しました。')
       } finally {
         setLoading(false)
@@ -117,7 +122,7 @@ const UserListPage = () => {
     }
 
     fetchUsers()
-  }, [])
+  }, [search])
 
   if (loading) {
     return <main className="auth-container"><p>ユーザー一覧を読み込んでいます...</p></main>
@@ -145,6 +150,17 @@ const UserListPage = () => {
             新規登録
           </button>
         </div>
+
+        <div className="user-search">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="名前・メールアドレスで検索"
+            aria-label="名前・メールアドレスで検索"
+          />
+        </div>
+
         {showForm && (
           <UserForm
             user={editingUser}

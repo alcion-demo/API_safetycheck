@@ -121,19 +121,20 @@
     padding: 24px;
   }
 }
-  .register-link {
+
+.register-link {
   margin-top: 20px;
   text-align: center;
   font-size: 14px;
-  }
+}
 
-  .login-link {
+.login-link {
   margin-top: 20px;
   text-align: center;
   font-size: 14px;
-  }
+}
 
-  .text-link {
+.text-link {
   padding: 0;
   border: none;
   background: none;
@@ -141,11 +142,11 @@
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
-  }
+}
 
-  .text-link:hover {
+.text-link:hover {
   color: #1d4ed8;
-  }
+}
 
 .user-table-wrapper {
   width: 100%;
@@ -185,7 +186,7 @@
 
 .user-table th:nth-child(3),
 .user-table td:nth-child(3) {
-  width: 200px; /* メールアドレス（広がりすぎないように固定） */
+  width: 200px;
 }
 
 .user-table th:nth-child(4),
@@ -195,13 +196,12 @@
 
 .user-table th:nth-child(5),
 .user-table td:nth-child(5) {
-  width: 140px; /* 操作（ボタン用） */
+  width: 140px;
 }
 
 .user-table td:last-child button + button {
   margin-left: 8px;
 }
-
 
 /* ログイン後の共通レイアウト */
 .app-layout {
@@ -343,8 +343,6 @@
   }
 }
 
-
-/* デフォルト：PCではテーブルを表示 */
 .desktop-user-list {
   display: block;
 }
@@ -361,7 +359,6 @@
   margin-left: 8px;
 }
 
-/* スマホではカード形式に切り替え */
 @media (max-width: 640px) {
   .desktop-user-list {
     display: none;
@@ -434,7 +431,6 @@
   }
 }
 
-/* ユーザー管理画面専用 */
 .auth-container.user-management-page {
   min-height: auto;
   display: block;
@@ -488,7 +484,6 @@
   background: #1e40af;
 }
 
-/* 登録・編集フォーム */
 .auth-card .user-form {
   display: flex;
   flex-direction: column;
@@ -591,5 +586,313 @@
 
   .auth-card .user-form {
     padding: 18px;
+  }
+}
+
+.profile-card {
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.password-fieldset {
+  margin: 12px 0 0;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.password-fieldset legend {
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.success-message {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ==========================================
+   安否確認管理画面（1行スマート配置対応版）
+   ========================================== */
+.safety-check-management-page {
+  width: 100%;
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.safety-check-management-card {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 28px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #dce3ed;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgb(15 23 42 / 5%);
+}
+
+.safety-check-management-card h1 {
+  margin: 0 0 24px;
+  color: #1e3a5f;
+  font-size: 24px;
+  text-align: left;
+}
+
+.safety-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.safety-check-card {
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid #dce3ed;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.safety-check-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.safety-check-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.safety-check-title-row h2 {
+  margin: 0;
+  color: #1e3a5f;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.safety-check-type {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.safety-check-status {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.safety-check-status.status-scheduled {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.safety-check-status.status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.safety-check-status.status-closed {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* 実施予定日時を1行にまとめるクラス */
+.safety-check-schedule-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 14px;
+}
+
+.safety-check-schedule-inline .datetime {
+  color: #1e3a5f;
+  font-weight: 600;
+}
+
+.safety-check-message {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.safety-check-actions {
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .safety-check-management-card {
+    padding: 20px 16px;
+  }
+
+  .safety-check-card {
+    padding: 16px;
+  }
+}
+
+/* 訓練予約画面 */
+.safety-check-create-page {
+  text-align: left;
+}
+
+.safety-check-create-page h1 {
+  margin-bottom: 8px;
+}
+
+.safety-check-create-page > p {
+  text-align: left;
+  line-height: 1.6;
+}
+
+.safety-check-create-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 22px;
+  width: 100%;
+  margin: 28px 0 0;
+  text-align: left;
+}
+
+.safety-check-form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.safety-check-form-group label {
+  display: block;
+  font-weight: 600;
+  color: #334155;
+  text-align: left;
+}
+
+.safety-check-form-group input,
+.safety-check-form-group textarea {
+  display: block;
+  width: 100%;
+  max-width: 680px;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #17243b;
+  font: inherit;
+}
+
+.safety-check-form-group textarea {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.safety-check-form-group input:focus,
+.safety-check-form-group textarea:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 1px;
+}
+
+.safety-check-datetime-group input {
+  width: auto;
+  max-width: 100%;
+  min-width: 180px;
+}
+
+.safety-check-create-form .safety-check-form-error {
+  color: #c62828;
+  font-size: 0.875rem;
+  margin: 6px 0 0;
+}
+
+.safety-check-create-form > div:last-child {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.safety-check-create-form > div:last-child button {
+  min-height: 42px;
+  padding: 10px 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  cursor: pointer;
+}
+
+.safety-check-create-form > div:last-child button[type="submit"] {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 600;
+}
+
+.safety-check-create-form > div:last-child button:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.safety-check-create-form > div:last-child button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .safety-check-create-page {
+    padding: 20px 16px;
+  }
+
+  .safety-check-create-form {
+    gap: 18px;
+  }
+
+  .safety-check-create-form > div:last-child {
+    justify-content: flex-start;
   }
 }

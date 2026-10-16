@@ -1,124 +1,24 @@
 import { useEffect, useState } from 'react'
-import {
-  Navigate,
-  NavLink,
-  Route,
-  Routes,
-  useNavigate,
-} from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser } from './pages/Auth/auth'
 import LoginPage from './pages/Auth/LoginPage'
 import RegisterPage from './pages/Auth/RegisterPage'
 import UserListPage from './pages/Admin/User/UserListPage'
+import ProfilePage from './pages/Profile/ProfilePage'
+import SafetyCheckListPage from './pages/Admin/SafetyCheck/ListPage'
+import SafetyCheckCreatePage from './pages/Admin/SafetyCheck/CreatePage'
+import AuthenticatedLayout from './components/layout/AuthenticatedLayout'
+import HomePage from './pages/Home/HomePage'
+import SafetyCheckEditPage from './pages/Admin/SafetyCheck/SafetyCheckEditPage'
 import './App.css'
 
 type User = {
   id: number
   name: string
+  
   email: string
   roles: string[]
 }
-
-type LayoutProps = {
-  user: User
-  error: string
-  onLogout: () => void
-  children: React.ReactNode
-}
-
-const AuthenticatedLayout = ({
-  user,
-  error,
-  onLogout,
-  children,
-}: LayoutProps) => {
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  return (
-    <div className="app-layout">
-      <header className="app-header">
-        <NavLink to="/" className="app-brand">
-          安否確認システム
-        </NavLink>
-
-        <div className="app-header-user">
-          <span>{user.name}</span>
-          <button
-            type="button"
-            className="logout-button"
-            onClick={onLogout}
-          >
-            ログアウト
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="menu-toggle"
-          aria-label="メニューを開閉"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          ☰
-        </button>
-      </header>
-
-      <div className="app-body">
-        <nav
-          className={`app-sidebar ${menuOpen ? 'is-open' : ''}`}
-          aria-label="メインメニュー"
-        >
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `app-nav-link ${isActive ? 'active' : ''}`
-            }
-            onClick={() => setMenuOpen(false)}
-          >
-            ホーム
-          </NavLink>
-
-          {user.roles.includes('admin') && (
-            <NavLink
-              to="/admin/users"
-              className={({ isActive }) =>
-                `app-nav-link ${isActive ? 'active' : ''}`
-              }
-              onClick={() => setMenuOpen(false)}
-            >
-              ユーザー管理
-            </NavLink>
-          )}
-        </nav>
-
-        <main className="app-content">
-          {error && (
-            <p className="error-message" role="alert">
-              {error}
-            </p>
-          )}
-          {children}
-        </main>
-      </div>
-    </div>
-  )
-}
-
-const HomePage = ({ user }: { user: User }) => (
-  <section className="home-page">
-    <h1>ホーム</h1>
-    <p>ログインしました。</p>
-
-    <dl className="user-info">
-      <dt>ユーザー名</dt>
-      <dd>{user.name}</dd>
-
-      <dt>メールアドレス</dt>
-      <dd>{user.email}</dd>
-    </dl>
-  </section>
-)
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null)
@@ -217,6 +117,65 @@ const App = () => {
               onLogout={handleLogout}
             >
               <UserListPage />
+            </AuthenticatedLayout>
+          )
+        }
+      />
+
+      <Route
+        path="/admin/safety-checks"
+        element={
+          user?.roles.includes('admin') ? (
+            <AuthenticatedLayout
+              user={user}
+              error={error}
+              onLogout={handleLogout}
+            >
+              <SafetyCheckListPage />
+            </AuthenticatedLayout>
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/admin/safety-checks/create"
+        element={
+          user?.roles.includes('admin') ? (
+            <AuthenticatedLayout
+              user={user}
+              error={error}
+              onLogout={handleLogout}
+            >
+              <SafetyCheckCreatePage />
+            </AuthenticatedLayout>
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/admin/safety-checks/:id/edit"
+        element={<SafetyCheckEditPage  />}
+      />
+
+      <Route
+        path="/profile"
+        element={
+          !user ? (
+            <Navigate to="/" replace />
+          ) : (
+            <AuthenticatedLayout
+              user={user}
+              error={error}
+              onLogout={handleLogout}
+            >
+              <ProfilePage
+                user={user}
+                onProfileUpdated={setUser}
+              />
             </AuthenticatedLayout>
           )
         }
