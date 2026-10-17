@@ -10,3 +10,18 @@ export type SafetyCheck = {
   created_at: string
   updated_at: string
 }
+
+export type SafetyCheckResponseItem = {
+  id: number | null
+  safety_check_id: number
+  user_id: number
+  status: 'safe' | 'serious' | 'traffic' | 'unknown' | null
+  memo: string | null
+  created_at: string | null
+  updated_at?: string | null
+  user: {
+    id: number
+    name: string
+    email: string
+  } | null
+}

@@ -24,11 +24,22 @@ class ActivateScheduledSafetyCheckJob implements ShouldQueue, ShouldBeUnique
      */
     public function handle(): void
     {
+        logger()->info('Scheduled safety check scan', [
+            'now' => now()->toDateTimeString(),
+            'timezone' => config('app.timezone'),
+        ]);
+
         $safetyChecks = SafetyCheck::where('status', 'scheduled')
             ->where('scheduled_at', '<=', now())
             ->get();
 
         foreach ($safetyChecks as $safetyCheck) {
+            logger()->info('Scheduled safety check matched', [
+                'id' => $safetyCheck->id,
+                'scheduled_at' => $safetyCheck->scheduled_at,
+                'status' => $safetyCheck->status,
+            ]);
+
             if ($safetyCheck->type === 'training') {
                 $safetyCheck->activateTraining();
             }

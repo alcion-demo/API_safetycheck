@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SafetyCheckNotification;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['type', 'title', 'message', 'scheduled_at', 'status', 'started_at', 'ended_at',])]
 class SafetyCheck extends Model
@@ -21,6 +22,10 @@ class SafetyCheck extends Model
         'ended_at' => 'datetime',
     ];
 
+    public function responses(): HasMany
+    {
+        return $this->hasMany(SafetyCheckResponse::class);
+    }
 
     /**
      * 訓練用安否確認作成
@@ -59,7 +64,8 @@ class SafetyCheck extends Model
                 Mail::to($user->email)->queue(
                     new SafetyCheckNotification(
                         $this->title,
-                        $this->message
+                        $this->message,
+                        $this->id,
                     )
                 );
             });
@@ -93,4 +99,5 @@ class SafetyCheck extends Model
     {
         // ここに本番作成処理
     }
+
 }

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SafetyCheckController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SafetyCheckResponseController;
 
 Route::get('/user', function (Request $request) {
     $user = $request->user();
@@ -39,7 +40,7 @@ Route::post('/safety-checks/test', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::apiResource('safety-checks', SafetyCheckController::class)
-    ->only(['index', 'store', 'update', 'destroy'])
+    ->only(['index', 'store', 'show', 'update', 'destroy'])
     ->middleware('auth:sanctum');
 
 Route::post(
@@ -49,3 +50,12 @@ Route::post(
 Route::post(
     'safety-checks/{id}/close', [SafetyCheckController::class, 'close'])
     ->middleware(['auth:sanctum', 'role:admin']);
+
+Route::post(
+    'safety-checks/{id}/responses', [SafetyCheckResponseController::class, 'store'])
+    ->middleware('auth:sanctum');
+
+Route::get(
+    'safety-checks/{id}/responses',
+    [SafetyCheckResponseController::class, 'index']
+)->middleware(['auth:sanctum', 'role:admin']);

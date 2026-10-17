@@ -1,5 +1,5 @@
 import api from '../../api/client'
-import type { SafetyCheck } from './types'
+import type { SafetyCheck, SafetyCheckResponseItem } from './types'
 
 export const getSafetyChecks = async (): Promise<SafetyCheck[]> => {
   const response = await api.get<SafetyCheck[]>('/api/safety-checks')
@@ -59,4 +59,43 @@ export const deleteSafetyCheck = async (
   id: number,
 ): Promise<void> => {
   await api.delete(`/api/safety-checks/${id}`)
+}
+
+export type SafetyCheckResponseStatus =
+  | 'safe'
+  | 'serious'
+  | 'traffic'
+  | 'unknown'
+
+export const submitSafetyCheckResponse = async (
+  id: number,
+  data: {
+    status: SafetyCheckResponseStatus
+    memo?: string
+  },
+): Promise<void> => {
+  await api.post(
+    `/api/safety-checks/${id}/responses`,
+    data,
+  )
+}
+
+export const getSafetyCheck = async (
+  id: number,
+): Promise<SafetyCheck> => {
+  const response = await api.get<SafetyCheck>(
+    `/api/safety-checks/${id}`,
+  )
+
+  return response.data
+}
+
+export const getSafetyCheckResponses = async (
+  id: number,
+): Promise<SafetyCheckResponseItem[]> => {
+  const response = await api.get<{
+    responses: SafetyCheckResponseItem[]
+  }>(`/api/safety-checks/${id}/responses`)
+
+  return response.data.responses
 }

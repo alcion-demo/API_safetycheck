@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getSafetyChecks, activateSafetyCheck, closeSafetyCheck, deleteSafetyCheck } from '../../../safety-checks/api/safetyChecksApi'
+import { getSafetyChecks, closeSafetyCheck, deleteSafetyCheck } from '../../../safety-checks/api/safetyChecksApi'
 import type { SafetyCheck } from '../../../safety-checks/api/types'
 import { useNavigate } from 'react-router-dom'
 
@@ -8,16 +8,6 @@ const SafetyCheckListPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const navigate = useNavigate()
-
-  const handleActivate = async (id: number) => {
-    try {
-      await activateSafetyCheck(id)
-      const data = await getSafetyChecks()
-      setSafetyChecks(data)
-    } catch {
-      setError('安否確認の開始に失敗しました。')
-    }
-  }
 
   const handleClose = async (id: number) => {
     try {
@@ -60,6 +50,11 @@ const SafetyCheckListPage = () => {
     }
 
     fetchSafetyChecks()
+
+    const timer = setInterval(fetchSafetyChecks, 5_000)
+
+    return () => clearInterval(timer)
+
   }, [])
 
   const sortedSafetyChecks = [...safetyChecks].sort(
@@ -131,15 +126,14 @@ const SafetyCheckListPage = () => {
                     className="safety-check-actions"
                     style={{ marginTop: '4px', textAlign: 'left' }}
                   >
-                    {safetyCheck.status === 'scheduled' && (
-                      <button
-                        type="button"
-                        onClick={() => handleActivate(safetyCheck.id)}
-                      >
-                        訓練を開始
-                      </button>
-                    )}
-
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(`/admin/safety-checks/${safetyCheck.id}/responses`)
+                      }
+                    >
+                      回答結果
+                    </button>
                     {safetyCheck.type === 'training' &&
                       safetyCheck.status === 'scheduled' && (
                         <button
