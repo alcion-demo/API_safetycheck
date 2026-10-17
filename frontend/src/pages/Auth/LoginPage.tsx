@@ -12,9 +12,10 @@ type User = {
 type LoginPageProps = {
   onLoginSuccess: (user: User) => void
   onShowRegister: () => void
+  onShowForgotPassword: () => void
 }
 
-const LoginPage = ({ onLoginSuccess, onShowRegister }: LoginPageProps) => {
+const LoginPage = ({ onLoginSuccess, onShowRegister, onShowForgotPassword }: LoginPageProps) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -96,6 +97,17 @@ const LoginPage = ({ onLoginSuccess, onShowRegister }: LoginPageProps) => {
               新規登録
             </button>
           </p>
+
+          <p className="forgot-password-link">
+            <button
+              type="button"
+              className="text-link"
+              onClick={onShowForgotPassword}
+            >
+              パスワードを忘れた場合
+            </button>
+          </p>
+
         </form>
       </section>
     </main>

@@ -27,6 +27,16 @@ class SafetyCheckController extends Controller
     }
 
     /**
+     * 指定された安否確認を取得する
+     */
+    public function show(string $id)
+    {
+        $safetyCheck = $this->safetycheck->findOrFail($id);
+
+        return response()->json($safetyCheck);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreSafetyCheckRequest $request)
@@ -109,7 +119,6 @@ class SafetyCheckController extends Controller
         return response()->json($safetyCheck->fresh());
     }
 
-    
     /**
      * 訓練用安否確認を終了する
      */

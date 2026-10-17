@@ -17,7 +17,7 @@ class SafetyCheckNotification extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      */
-    public function __construct(public string $title, public string $body)
+    public function __construct(public string $title, public string $body, public int $safetyCheckId)
     {}
 
     /**
@@ -37,6 +37,10 @@ class SafetyCheckNotification extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'emails.safety-check-notification',
+            with: [
+                'responseUrl' => rtrim(config('services.frontend_url'), '/')
+                    . '/safety-checks/' . $this->safetyCheckId . '/respond',
+            ],
         );
     }
 

@@ -43,3 +43,20 @@ export const getCurrentUser = async () => {
 
   return response.data
 }
+
+export const forgotPassword = async (email: string) => {
+  await getCsrfCookie()
+  const response = await api.post('/forgot-password', { email })
+  return response.data
+}
+
+export const resetPassword = async (data: {
+  token: string
+  email: string
+  password: string
+  password_confirmation: string
+}) => {
+  await getCsrfCookie()
+  const response = await api.post('/reset-password', data)
+  return response.data
+}

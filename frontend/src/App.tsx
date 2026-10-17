@@ -1,24 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser } from './pages/Auth/auth'
-import LoginPage from './pages/Auth/LoginPage'
-import RegisterPage from './pages/Auth/RegisterPage'
-import UserListPage from './pages/Admin/User/UserListPage'
-import ProfilePage from './pages/Profile/ProfilePage'
-import SafetyCheckListPage from './pages/Admin/SafetyCheck/ListPage'
-import SafetyCheckCreatePage from './pages/Admin/SafetyCheck/CreatePage'
-import AuthenticatedLayout from './components/layout/AuthenticatedLayout'
-import HomePage from './pages/Home/HomePage'
-import SafetyCheckEditPage from './pages/Admin/SafetyCheck/SafetyCheckEditPage'
+import AppRoutes from './routes/AppRoutes'
+import type { User } from './routes/AppRoutes'
 import './App.css'
-
-type User = {
-  id: number
-  name: string
-  
-  email: string
-  roles: string[]
-}
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null)
@@ -32,6 +17,7 @@ const App = () => {
 
     getCurrentUser()
       .then((currentUser: User) => {
+        console.log('現在のユーザー取得成功:', currentUser)
         if (mounted) setUser(currentUser)
       })
       .catch(() => {})
@@ -65,124 +51,12 @@ const App = () => {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/register"
-        element={
-          user ? (
-            <Navigate to="/" replace />
-          ) : (
-            <RegisterPage
-              onRegisterSuccess={(newUser: User) => {
-                setUser(newUser)
-                navigate('/')
-              }}
-              onBackToLogin={() => navigate('/')}
-            />
-          )
-        }
-      />
-
-      <Route
-        path="/"
-        element={
-          !user ? (
-            <LoginPage
-              onLoginSuccess={setUser}
-              onShowRegister={() => navigate('/register')}
-            />
-          ) : (
-            <AuthenticatedLayout
-              user={user}
-              error={error}
-              onLogout={handleLogout}
-            >
-              <HomePage user={user} />
-            </AuthenticatedLayout>
-          )
-        }
-      />
-
-      <Route
-        path="/admin/users"
-        element={
-          !user ? (
-            <Navigate to="/" replace />
-          ) : !user.roles.includes('admin') ? (
-            <Navigate to="/" replace />
-          ) : (
-            <AuthenticatedLayout
-              user={user}
-              error={error}
-              onLogout={handleLogout}
-            >
-              <UserListPage />
-            </AuthenticatedLayout>
-          )
-        }
-      />
-
-      <Route
-        path="/admin/safety-checks"
-        element={
-          user?.roles.includes('admin') ? (
-            <AuthenticatedLayout
-              user={user}
-              error={error}
-              onLogout={handleLogout}
-            >
-              <SafetyCheckListPage />
-            </AuthenticatedLayout>
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-
-      <Route
-        path="/admin/safety-checks/create"
-        element={
-          user?.roles.includes('admin') ? (
-            <AuthenticatedLayout
-              user={user}
-              error={error}
-              onLogout={handleLogout}
-            >
-              <SafetyCheckCreatePage />
-            </AuthenticatedLayout>
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-
-      <Route
-        path="/admin/safety-checks/:id/edit"
-        element={<SafetyCheckEditPage  />}
-      />
-
-      <Route
-        path="/profile"
-        element={
-          !user ? (
-            <Navigate to="/" replace />
-          ) : (
-            <AuthenticatedLayout
-              user={user}
-              error={error}
-              onLogout={handleLogout}
-            >
-              <ProfilePage
-                user={user}
-                onProfileUpdated={setUser}
-              />
-            </AuthenticatedLayout>
-          )
-        }
-      />
-
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AppRoutes
+      user={user}
+      setUser={setUser}
+      error={error}
+      handleLogout={handleLogout}
+    />
   )
 }
 
