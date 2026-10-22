@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\SafetyCheckNotification;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['type', 'title', 'message', 'scheduled_at', 'status', 'started_at', 'ended_at',])]
+#[Fillable(['type', 'title', 'disaster_key', 'message', 'scheduled_at', 'status', 'started_at', 'ended_at',])]
 class SafetyCheck extends Model
 {
     use HasFactory;
@@ -95,9 +95,43 @@ class SafetyCheck extends Model
         $this->update($data);
     }
 
-    public function createProduction(array $data)
-    {
-        // ここに本番作成処理
-    }
 
+    public function createProduction(array $data): self
+    {
+        if (empty($data['disaster_key'])) {
+            throw new \InvalidArgumentException(
+                '本番の安否確認には disaster_key が必要です。'
+            );
+        }
+
+        $safetyCheck = self::firstOrCreate(
+            ['disaster_key' => $data['disaster_key']],
+            [
+                'type' => 'production',
+                'title' => $data['title'],
+                'message' => $data['message'],
+                'scheduled_at' => null,
+                'status' => 'active',
+                'started_at' => now(),
+                'ended_at' => null,
+            ]
+        );
+
+        // 新規作成された場合だけ、登録済みユーザーへ回答依頼メールを送信
+        if ($safetyCheck->wasRecentlyCreated) {
+            User::whereNotNull('email')
+                ->where('email', '!=', '')
+                ->each(function (User $user) use ($safetyCheck) {
+                    Mail::to($user->email)->queue(
+                        new SafetyCheckNotification(
+                            $safetyCheck->title,
+                            $safetyCheck->message,
+                            $safetyCheck->id,
+                        )
+                    );
+                });
+        }
+
+        return $safetyCheck;
+    }
 }

@@ -25,6 +25,16 @@ export const closeSafetyCheck = async (
   return response.data
 }
 
+export const closeProductionSafetyCheck = async (
+  id: number,
+): Promise<SafetyCheck> => {
+  const response = await api.post<SafetyCheck>(
+    `/api/safety-checks/${id}/close-production`,
+  )
+  return response.data
+}
+
+
 export const createSafetyCheck = async (
   data: {
     title: string
@@ -66,6 +76,7 @@ export type SafetyCheckResponseStatus =
   | 'serious'
   | 'traffic'
   | 'unknown'
+  | 'not_applicable'
 
 export const submitSafetyCheckResponse = async (
   id: number,

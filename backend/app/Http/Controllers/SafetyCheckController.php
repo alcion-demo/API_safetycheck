@@ -141,4 +141,31 @@ class SafetyCheckController extends Controller
         return response()->json($safetyCheck);
     }
 
+
+    /**
+     * 本番の安否確認を終了する
+     */
+    public function closeProduction(string $id)
+    {
+        $safetyCheck = $this->safetycheck->findOrFail($id);
+
+        // 本番以外は終了できない
+        if ($safetyCheck->type !== 'production') {
+            abort(422, '本番の安否確認のみ終了できます。');
+        }
+
+        // 対応中の本番のみ終了できる
+        if ($safetyCheck->status !== 'active') {
+            abort(422, '対応中の本番のみ終了できます。');
+        }
+
+        $safetyCheck->update([
+            'status' => 'closed',
+            'ended_at' => now(),
+        ]);
+
+        return response()->json($safetyCheck->fresh());
+    }
+
+
 }

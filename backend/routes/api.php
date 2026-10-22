@@ -52,6 +52,11 @@ Route::post(
     ->middleware(['auth:sanctum', 'role:admin']);
 
 Route::post(
+    'safety-checks/{id}/close-production',
+    [SafetyCheckController::class, 'closeProduction']
+)->middleware(['auth:sanctum', 'role:admin']);
+
+Route::post(
     'safety-checks/{id}/responses', [SafetyCheckResponseController::class, 'store'])
     ->middleware('auth:sanctum');
 

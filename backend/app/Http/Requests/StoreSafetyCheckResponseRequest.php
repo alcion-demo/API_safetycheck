@@ -32,7 +32,7 @@ class StoreSafetyCheckResponseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status'       => ['required', 'string', 'in:safe,serious,traffic,unknown'],
+            'status'       => ['required', 'string', 'in:safe,serious,traffic,unknown,not_applicable'],
             'memo'      => ['nullable', 'string', 'max:2000'],
         ];
     }

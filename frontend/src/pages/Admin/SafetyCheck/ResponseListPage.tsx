@@ -11,6 +11,7 @@ type ResponseFilter =
   | 'serious'
   | 'traffic'
   | 'unknown'
+  | 'not_applicable'
 
 const ResponseListPage = () => {
   const { id } = useParams()
@@ -52,6 +53,8 @@ const ResponseListPage = () => {
         return '交通事情で移動困難'
       case 'unknown':
         return '状況不明'
+      case 'not_applicable':
+        return '災害対象外地域'
       default:
         return '未回答'
     }
@@ -131,6 +134,7 @@ const ResponseListPage = () => {
                   <option value="serious">重症</option>
                   <option value="traffic">交通事情で移動困難</option>
                   <option value="unknown">状況不明</option>
+                  <option value="not_applicable">災害対象外地域</option>
                 </select>
               </div>
 

@@ -53,4 +53,43 @@ class SafetyCheckResponse extends Model
             ->where('safety_check_id', $safetyCheckId)
             ->get();
     }
+
+
+    public function test_not_applicable_response_can_be_saved_and_retrieved(): void
+    {
+        $user = User::factory()->create();
+
+        $safetyCheck = SafetyCheck::create([
+            'type' => 'training',
+            'title' => '対象地域確認テスト',
+            'message' => 'テストメッセージ',
+            'status' => 'active',
+            'started_at' => now(),
+            'ended_at' => null,
+            'created_by' => $user->id,
+        ]);
+
+        $response = new \App\Models\SafetyCheckResponse();
+
+        $saved = $response->createResponse(
+            $safetyCheck->id,
+            $user->id,
+            [
+                'status' => 'not_applicable',
+                'memo' => '災害対象外地域',
+            ]
+        );
+
+        $this->assertDatabaseHas('safety_check_responses', [
+            'safety_check_id' => $safetyCheck->id,
+            'user_id' => $user->id,
+            'status' => 'not_applicable',
+            'memo' => '災害対象外地域',
+        ]);
+
+        $retrieved = \App\Models\SafetyCheckResponse::findOrFail($saved->id);
+
+        $this->assertSame('not_applicable', $retrieved->status);
+        $this->assertSame('災害対象外地域', $retrieved->memo);
+    }
 }
