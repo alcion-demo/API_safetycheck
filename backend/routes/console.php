@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::job(new ActivateScheduledSafetyCheckJob)->everyMinute();
+
+Schedule::command('app:inspect-jma-feeds')
+    ->everyMinute()
+    ->withoutOverlapping();

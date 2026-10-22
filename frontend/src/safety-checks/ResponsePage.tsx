@@ -157,6 +157,18 @@ const ResponsePage = () => {
                 />
                 不明
               </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="status"
+                  value="not_applicable"
+                  checked={status === 'not_applicable'}
+                  onChange={() => setStatus('not_applicable')}
+                />
+                災害対象外地域
+              </label>
+
             </fieldset>
 
             <div>
