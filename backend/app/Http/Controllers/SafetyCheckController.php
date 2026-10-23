@@ -12,9 +12,7 @@ class SafetyCheckController extends Controller
     /**
      * __construct
      */
-    public function __construct(protected SafetyCheck $safetycheck)
-    {
-    }
+    public function __construct(protected SafetyCheck $safetycheck) {}
 
     /**
      * Display a listing of the resource.
@@ -167,5 +165,24 @@ class SafetyCheckController extends Controller
         return response()->json($safetyCheck->fresh());
     }
 
+    /**
+     * ログインユーザー自身の未回答の安否確認を取得
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function unanswered(Request $request)
+    {
+        $userId = $request->user()->id;
 
+        $safetyChecks = SafetyCheck::query()
+            ->where('status', 'active')
+            ->whereDoesntHave('responses', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->latest()
+            ->get();
+
+        return response()->json($safetyChecks);
+    }
 }

@@ -896,3 +896,371 @@
     justify-content: flex-start;
   }
 }
+
+
+/* ===== ホーム：管理ダッシュボード ===== */
+.home-page.dashboard-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #18243a;
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.dashboard-heading h1 {
+  margin: 0;
+  color: #17243b;
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+}
+
+.dashboard-heading .dashboard-welcome {
+  margin: 9px 0 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.dashboard-eyebrow {
+  display: none;
+}
+
+.dashboard-role {
+  display: none;
+}
+
+/* 上段の統計カード */
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.dashboard-metric {
+  position: relative;
+  min-width: 0;
+  min-height: 150px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid #e5eaf2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgb(22 40 75 / 3%);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.dashboard-metric:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgb(22 40 75 / 8%);
+}
+
+.dashboard-metric::after {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  opacity: 0.75;
+}
+
+.dashboard-metric > span {
+  display: block;
+  margin-bottom: 18px;
+  color: #65738a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-metric > strong {
+  display: block;
+  color: #18243a;
+  font-size: 38px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-metric > small {
+  display: block;
+  margin-top: 12px;
+  color: #8995a8;
+  font-size: 12px;
+}
+
+.metric-active {
+  color: #2563eb;
+  background: linear-gradient(145deg, #fff 55%, #eff6ff);
+}
+
+.metric-scheduled {
+  color: #d97706;
+  background: linear-gradient(145deg, #fff 55%, #fffbeb);
+}
+
+.metric-production {
+  color: #dc4c4c;
+  background: linear-gradient(145deg, #fff 55%, #fff1f2);
+}
+
+.metric-closed {
+  color: #0d9488;
+  background: linear-gradient(145deg, #fff 55%, #f0fdfa);
+}
+
+/* 一覧・回答状況パネル */
+.dashboard-panel {
+  min-width: 0;
+  margin-bottom: 22px;
+  padding: 26px;
+  border: 1px solid #e5eaf2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgb(22 40 75 / 3%);
+}
+
+.dashboard-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.dashboard-panel-heading h2 {
+  margin: 0;
+  color: #1b2940;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.dashboard-count {
+  flex-shrink: 0;
+  padding: 6px 11px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #59677d;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.dashboard-check-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-check-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  padding: 17px 4px;
+  border-bottom: 1px solid #f0f2f6;
+}
+
+.dashboard-check-row:last-child {
+  border-bottom: 0;
+}
+
+.dashboard-check-icon {
+  display: flex;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.dashboard-check-row:has(.status-active) .dashboard-check-icon {
+  background: #fff1f2;
+  color: #dc4c4c;
+}
+
+.dashboard-check-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-check-main h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #26354b;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.6;
+}
+
+.dashboard-check-main p {
+  margin: 5px 0 0;
+  color: #8994a6;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dashboard-status {
+  flex-shrink: 0;
+  padding: 6px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-status.status-active {
+  background: #fff1f2;
+  color: #c2414b;
+}
+
+.dashboard-status.status-scheduled {
+  background: #fff7e6;
+  color: #a16207;
+}
+
+.dashboard-status.status-closed {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.dashboard-empty {
+  margin: 0;
+  padding: 28px 12px;
+  color: #8a96a8;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 回答状況 */
+.dashboard-response-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* モバイル〜標準は2列 */
+  gap: 12px;
+}
+
+/* カード共通スタイル */
+.response-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.response-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* ラベルとドットアイコン */
+.response-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.response-label .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+/* 数値表示 */
+.response-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: #0f172a;
+}
+
+/* --- カラーテーマ分岐 --- */
+
+/* 無事（グリーン） */
+.response-card.response-safe {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+.response-card.response-safe strong { color: #15803d; }
+
+/* 重傷（レッド） */
+.response-card.response-serious {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+.response-card.response-serious strong { color: #b91c1c; }
+
+/* 交通困難（オレンジ） */
+.response-card.response-traffic {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #d97706;
+}
+.response-card.response-traffic strong { color: #b45309; }
+
+/* 状況不明（パープル/グレー） */
+.response-card.response-unknown {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  color: #9333ea;
+}
+.response-card.response-unknown strong { color: #7e22ce; }
+
+/* 未回答（ダークスレート / 目立つ配色） */
+.response-card.response-unanswered {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+.response-card.response-unanswered strong { color: #334155; }
+
+
+/* レスポンシブ調整 */
+@media (min-width: 640px) and (max-width: 1099px) {
+  .dashboard-response-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  /* サイドエリアに収まるよう2列配置 */
+  .dashboard-response-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* 未回答カードを横いっぱいに広げたい場合（お好みで） */
+  .response-card.response-unanswered {
+    grid-column: span 2;
+  }
+}

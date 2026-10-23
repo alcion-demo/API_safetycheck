@@ -10,7 +10,7 @@ use App\Models\SafetyCheck;
 use App\Models\WeatherWarningState;
 use Illuminate\Support\Str;
 
-#[Signature('app:inspect-jma-feeds {--file= : 読み込むXMLファイルのパス} {--test-typhoon : 台風確率の判定テスト} {--test-weather-status : 気象警報の状態判定テスト} {--dry-run : DBを更新せずに判定だけ行う}')]
+#[Signature('app:inspect-jma-feeds {--file= : 読み込むXMLファイルのパス} {--test-typhoon : 台風確率の判定テスト} {--test-weather-status : 気象警報の状態判定テスト} {--dry-run : DBを更新せずに判定だけ行う} {--earthquake-only : 地震フィードのみ処理}')]
 #[Description('Command description')]
 class InspectJmaFeeds extends Command
 {
@@ -66,9 +66,12 @@ class InspectJmaFeeds extends Command
         $feeds = [
             '地震・火山' =>
             'https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml',
-            '気象情報' =>
-            'https://www.data.jma.go.jp/developer/xml/feed/extra.xml',
         ];
+
+        if (! $this->option('earthquake-only')) {
+            $feeds['気象情報'] =
+                'https://www.data.jma.go.jp/developer/xml/feed/extra.xml';
+        }
 
         $hasError = false;
 
@@ -109,6 +112,7 @@ class InspectJmaFeeds extends Command
 
                 foreach ($entries as $entry) {
                     $item = $entry->children(self::ATOM_NS);
+                    $title = trim((string) $item->title);
                     $xmlUrl = '';
 
                     foreach ($item->link as $link) {
@@ -127,6 +131,11 @@ class InspectJmaFeeds extends Command
                         $xmlUrl,
                         '_VXSE53_'
                     );
+
+                    if ($isEarthquake) {
+                        $this->line('[地震候補] タイトル: ' . $title);
+                        $this->line('[地震候補] XML URL: ' . $xmlUrl);
+                    }
 
                     $isTyphoon = str_contains(
                         $xmlUrl,
@@ -153,7 +162,6 @@ class InspectJmaFeeds extends Command
                     }
 
 
-                    $title = trim((string) $item->title);
 
                     // 台風関連の電文を探すための一時的な調査
                     if (
@@ -181,7 +189,7 @@ class InspectJmaFeeds extends Command
 
                     try {
                         // 対象XMLは1回だけ取得する
-                        $detail = Http::timeout(15)->get($xmlUrl);
+                        $detail = Http::timeout(30)->get($xmlUrl);
 
                         if (! $detail->successful()) {
                             $this->error(
@@ -215,6 +223,7 @@ class InspectJmaFeeds extends Command
 
                         if ($isEarthquake) {
                             $xpath->registerNamespace('body', self::SEISMIC_NS);
+                            $this->line('[地震処理開始] ' . $xmlUrl);
                             $this->inspectEarthquake($xpath);
                         } elseif ($isWeatherWarning) {
                             $xpath->registerNamespace('body', self::METEOROLOGY_NS);
@@ -307,47 +316,177 @@ class InspectJmaFeeds extends Command
 
         $root = trim($xpath->evaluate('string(//head:Title)'));
 
-        if (
+        // 台風の進路・予報情報
+        if (str_contains($root, '台風解析・予報情報')) {
+            $xpath->registerNamespace('body', self::METEOROLOGY_NS);
+            $this->info('台風の進路・予報情報として解析します。');
+            $this->inspectTyphoon($xpath);
+
+            // 台風の接近確率情報
+        } elseif (
+            str_contains($root, '台風５日進路予報')
+            || str_contains($root, '台風5日進路予報')
+        ) {
+            $xpath->registerNamespace('body', self::METEOROLOGY_NS);
+            $this->info('台風関連情報として解析します。');
+            $this->inspectTyphoonProbability($xpath);
+
+            // 気象警報・注意報
+        } elseif (
             str_contains($root, '気象警報・注意報')
             || str_contains($root, '大雨警報・注意報')
         ) {
             $xpath->registerNamespace('body', self::METEOROLOGY_NS);
-
             $this->inspectWeatherWarnings($xpath);
+
+            // それ以外は地震情報
         } else {
             $xpath->registerNamespace('body', self::SEISMIC_NS);
-
             $this->inspectEarthquake($xpath);
         }
 
         return self::SUCCESS;
     }
 
-    private function inspectEarthquake(
-        \DOMXPath $xpath
-    ): void {
+
+    private function inspectEarthquake(\DOMXPath $xpath): void
+    {
         $eventId = trim(
             $xpath->evaluate('string(//head:EventID)')
         );
 
-        $maxInt = trim(
-            $xpath->evaluate(
-                'string(//body:Intensity/body:Observation/body:MaxInt)'
-            )
+        $title = trim(
+            $xpath->evaluate('string(//head:Title)')
         );
 
         $reportDateTime = trim(
             $xpath->evaluate('string(//head:ReportDateTime)')
         );
 
-        if ($reportDateTime === '') {
-            $this->warn('発表時刻がないため、本番作成をスキップします。');
+        $this->line('地震情報タイトル: ' . $title);
+        $this->line('イベントID: ' . ($eventId !== '' ? $eventId : '未取得'));
+
+        // 遠地地震情報は国内の最大震度判定の対象外
+        if (str_contains($title, '遠地地震')) {
+            $this->line('[地震確認] 遠地地震情報のためスキップします。');
             return;
         }
 
-        $reportedAt = \Illuminate\Support\Carbon::parse($reportDateTime);
+        // --- ▼ ここから震源地データの取得を追加 ▼ ---
+        $hypoAreaName = trim(
+            $xpath->evaluate('string(//body:Earthquake/body:Hypocenter/body:Area/body:Name)')
+        );
+        $hypoCoordinate = trim(
+            $xpath->evaluate('string(//body:Earthquake/body:Hypocenter/body:Area/*[local-name()="Coordinate"]/@description)')
+        );
+        $hypoNameFromMark = trim(
+            $xpath->evaluate('string(//body:Earthquake/body:Hypocenter/body:Area/body:NameFromMark)')
+        );
+        $magnitude = trim(
+            $xpath->evaluate('string(//body:Earthquake/*[local-name()="Magnitude"])')
+        );
+        $magnitudeDesc = trim(
+            $xpath->evaluate('string(//body:Earthquake/*[local-name()="Magnitude"]/@description)')
+        );
 
-        $this->line('発表時刻: ' . $reportedAt->toDateTimeString());
+        $this->line('震央地名: ' . ($hypoAreaName !== '' ? $hypoAreaName : '記載なし'));
+        $this->line('震源詳細: ' . ($hypoCoordinate !== '' ? $hypoCoordinate : '記載なし'));
+        if ($hypoNameFromMark !== '') {
+            $this->line('震源補助: ' . $hypoNameFromMark);
+        }
+        $this->line('マグニチュード: ' . ($magnitude !== '' ? $magnitude : '不明') . ($magnitudeDesc !== '' ? " ({$magnitudeDesc})" : ''));
+        // --- ▲ 震源地データの取得ここまで ▲ ---
+
+
+        // 最大震度を取得
+        $maxInt = trim(
+            $xpath->evaluate(
+                'string(//*[local-name()="MaxInt"])'
+            )
+        );
+
+        $this->line('最大震度: ' . ($maxInt !== '' ? $maxInt : '記載なし'));
+
+        // 震度観測情報から、都道府県・地域・市区町村を取得
+        $locations = [];
+
+        $cityNodes = $xpath->query(
+            '//*[local-name()="Intensity"]'
+                . '/*[local-name()="Observation"]'
+                . '/*[local-name()="Pref"]'
+                . '/*[local-name()="Area"]'
+                . '/*[local-name()="City"]'
+        );
+
+        if ($cityNodes !== false) {
+            foreach ($cityNodes as $cityNode) {
+                $prefName = trim(
+                    $xpath->evaluate(
+                        'string(ancestor::*[local-name()="Pref"][1]/*[local-name()="Name"])',
+                        $cityNode
+                    )
+                );
+
+                $areaName = trim(
+                    $xpath->evaluate(
+                        'string(ancestor::*[local-name()="Area"][1]/*[local-name()="Name"])',
+                        $cityNode
+                    )
+                );
+
+                $cityName = trim(
+                    $xpath->evaluate(
+                        'string(./*[local-name()="Name"])',
+                        $cityNode
+                    )
+                );
+
+                $cityIntensity = trim(
+                    $xpath->evaluate(
+                        'string(./*[local-name()="MaxInt"])',
+                        $cityNode
+                    )
+                );
+
+                if ($cityName !== '') {
+                    $locations[] = [
+                        'prefecture' => $prefName,
+                        'area' => $areaName,
+                        'city' => $cityName,
+                        'intensity' => $cityIntensity,
+                    ];
+                }
+            }
+        }
+
+        $this->line('震度観測地域: ' . count($locations) . '市区町村');
+
+        foreach ($locations as $location) {
+            $intensity = $location['intensity'];
+
+            $isTargetArea = in_array(
+                $intensity,
+                ['5-', '5+', '6-', '6+', '7'],
+                true
+            );
+
+            if (!$isTargetArea) {
+                continue;
+            }
+
+            $this->line(
+                '[安否確認対象地域] '
+                    . $location['prefecture'] . ' / '
+                    . $location['area'] . ' / '
+                    . $location['city']
+                    . '（最大震度' . $intensity . '）'
+            );
+        }
+
+        if ($maxInt === '') {
+            $this->line('[地震確認] 最大震度の記載なし。スキップします。');
+            return;
+        }
 
         $isTarget = in_array(
             $maxInt,
@@ -355,37 +494,122 @@ class InspectJmaFeeds extends Command
             true
         );
 
-        $this->line('イベントID: ' . ($eventId !== '' ? $eventId : '未取得'));
-        $this->line('最大震度: ' . ($maxInt !== '' ? $maxInt : '未取得'));
         $this->line(
             '震度5弱以上: ' . ($isTarget ? '対象' : '対象外')
         );
 
-        if (! $isTarget) {
+        if (!$isTarget) {
             return;
         }
 
-        if ($reportedAt->lt(now()->subMinutes(30))) {
-            $this->line('古い地震情報のため、本番作成をスキップします。');
+        if ($reportDateTime === '' || $eventId === '') {
+            $this->warn('発表時刻またはイベントIDがないためスキップします。');
             return;
         }
 
-        if ($eventId === '') {
-            $this->warn('イベントIDがないため、本番の安否確認は作成しません。');
+        $reportedAt = \Illuminate\Support\Carbon::parse($reportDateTime);
+
+        // if ($reportedAt->lt(now()->subMinutes(30))) {
+        //     $this->line('古い地震情報のためスキップします。');
+        //     return;
+        // }
+
+        $isFileDryRun = $this->option('file') && $this->option('dry-run');
+
+        if ($reportedAt->lt(now()->subMinutes(30)) && !$isFileDryRun) {
+            $this->line('古い地震情報のためスキップします。');
             return;
         }
 
+        if ($reportedAt->lt(now()->subMinutes(30)) && $isFileDryRun) {
+            $this->warn('[テスト] 古いXMLのため、時刻チェックをスキップします。');
+        }
+
+
+        $targetLocations = array_filter(
+            $locations,
+            fn($location) => in_array(
+                $location['intensity'],
+                ['5-', '5+', '6-', '6+', '7'],
+                true
+            )
+        );
+
+        $locationText = implode("\n", array_map(
+            fn($location) =>
+            $location['prefecture'] . ' / '
+                . $location['area'] . ' / '
+                . $location['city']
+                . '（最大震度' . $location['intensity'] . '）',
+            $targetLocations
+        ));
+
+        // --- ▼ 震源地やマグニチュードをメッセージ（本文プレビュー）に含めるように修正 ▼ ---
+        $hypoText = $hypoAreaName !== '' ? "震源地: {$hypoAreaName}" : '';
+        if ($hypoNameFromMark !== '') {
+            $hypoText .= "（{$hypoNameFromMark}）";
+        }
+        if ($hypoCoordinate !== '') {
+            $hypoText .= "\n詳細位置: {$hypoCoordinate}";
+        }
+
+        // --- ▼ 規模の表示を安全にする修正（is_numericを追加） ▼ ---
+        $magText = '';
+        if ($magnitude !== '' && is_numeric($magnitude)) {
+            $magText = "M{$magnitude}";
+            if ($magnitudeDesc !== '') {
+                $magText .= " ({$magnitudeDesc})";
+            }
+        } elseif ($magnitudeDesc !== '') {
+            // 数値ではなくNaNなどの文字が入っている、または空の場合は説明文だけにする
+            $magText = $magnitudeDesc;
+        } else {
+            $magText = '規模不明';
+        }
+        // --- ▲ 修正ここまで ▲ ---
+
+        $message = "気象庁の地震情報で最大震度{$maxInt}を観測しました。";
+
+        if ($hypoText !== '') {
+            $message .= "\n{$hypoText}";
+        }
+        if ($magText !== '') {
+            $message .= "\n規模: {$magText}";
+        }
+
+        $message .= "\n\n現在の状況を回答してください。";
+        // --- ▲ 修正ここまで ▲ ---
+
+
+        // if ($locationText !== '') {
+        //     $message .= "\n\n安否確認対象地域（震度5弱以上）:\n"
+        //         . $locationText;
+        // }
+
+        $this->line('[DEBUG message length] ' . strlen($message));
+        $this->line('[DEBUG location header] ' . (
+            str_contains($message, '安否確認対象地域（震度5弱以上）')
+            ? 'あり'
+            : 'なし'
+        ));
+        $this->line('[DEBUG message tail]');
+        $this->line(substr($message, -1000));
+
+        $this->line('[本文プレビュー]');
+        $this->output->writeln($message);
+        // プレビュー表示後にdry-run判定
         if ($this->option('dry-run')) {
             $this->line('[DRY RUN] 本番作成をスキップします。');
             return;
         }
 
-        $safetyCheck = app(SafetyCheck::class)
-            ->createProduction([
-                'disaster_key' => 'earthquake:' . $eventId,
-                'title' => '地震発生に伴う安否確認',
-                'message' => "気象庁の地震情報で最大震度{$maxInt}を観測しました。現在の状況を回答してください。",
-            ]);
+
+
+        $safetyCheck = app(SafetyCheck::class)->createProduction([
+            'disaster_key' => 'earthquake:' . $eventId,
+            'title' => '地震発生に伴う安否確認',
+            'message' => $message,
+        ]);
 
         if ($safetyCheck->wasRecentlyCreated) {
             $this->info(
@@ -766,7 +990,7 @@ class InspectJmaFeeds extends Command
         );
 
         $items = $xpath->query(
-            '//*[local-name()="Warning" or local-name()="Information"]'
+            '//*[local-name()="Warning"]'
                 . '[@type="気象警報・注意報（市町村等）'
                 . '" or @type="気象警報・注意報（府県予報区等）"]'
                 . '/*[local-name()="Item"]'
@@ -788,12 +1012,14 @@ class InspectJmaFeeds extends Command
 
         foreach ($items as $item) {
             $area = trim($xpath->evaluate(
-                'string(./*[local-name()="Area"]/*[local-name()="Name"])',
+                'string((./*[local-name()="Area"]/*[local-name()="Name"]'
+                    . ' | ./*[local-name()="Areas"]/*[local-name()="Area"]/*[local-name()="Name"])[1])',
                 $item
             ));
 
             $code = trim($xpath->evaluate(
-                'string(./*[local-name()="Area"]/*[local-name()="Code"])',
+                'string((./*[local-name()="Area"]/*[local-name()="Code"]'
+                    . ' | ./*[local-name()="Areas"]/*[local-name()="Area"]/*[local-name()="Code"])[1])',
                 $item
             ));
 
@@ -831,6 +1057,11 @@ class InspectJmaFeeds extends Command
                         'string(./*[local-name()="Status"])',
                         $kind
                     ));
+
+                    // 警報・注意報がない項目はスキップ
+                    if ($status === '発表警報・注意報はなし') {
+                        continue;
+                    }
 
                     $lastName = trim($xpath->evaluate(
                         'string(./*[local-name()="LastKind"]/*[local-name()="Name"])',
@@ -908,11 +1139,21 @@ class InspectJmaFeeds extends Command
             if ($activeName !== null) {
                 $matched++;
 
+                $this->line(
+                    "[対象カウント] {$area}"
+                        . " / 対象={$activeName}"
+                        . " / レベル={$activeLevel}"
+                        . " / 累計={$matched}"
+                );
+
                 $previousLevel = match ($state?->warning_name) {
                     'レベル５大雨特別警報' => 5,
                     'レベル４大雨危険警報' => 4,
                     default => 0,
                 };
+
+                $shouldCreateHeavyRain = true;
+
 
                 // 既存の警報状態が有効な場合は、レベルの変化を比較する。
                 if ($state && $state->is_active) {
@@ -925,43 +1166,44 @@ class InspectJmaFeeds extends Command
                                 . " / 現在レベル={$activeLevel}"
                         );
 
-                        continue;
-                    }
+                        $shouldCreateHeavyRain = false;
+                    } else {
 
-                    // 有効な状態から、より高いレベルに上がった場合。
-                    $this->line(
-                        "[レベル上昇] {$area}"
-                            . " / レベル{$previousLevel}→{$activeLevel}"
-                    );
+                        // 有効な状態から、より高いレベルに上がった場合。
+                        $this->line(
+                            "[レベル上昇] {$area}"
+                                . " / レベル{$previousLevel}→{$activeLevel}"
+                        );
+                    }
                 } else {
                     $this->line("[新規作成予定] {$activeName} / {$area}");
                 }
 
-                // 初回発表、再発、またはレベル上昇時に新しいキーを発行する。
-                $key = 'weather-warning:' . $code . ':' . Str::uuid();
+                if ($shouldCreateHeavyRain) {
+                    // 初回発表、再発、またはレベル上昇時に新しいキーを発行する。
+                    $key = 'weather-warning:' . $code . ':' . Str::uuid();
 
-                if (!$dryRun) {
-                    (new SafetyCheck())->createProduction([
-                        'disaster_key' => $key,
-                        'title' => "{$area} 大雨警報による安否確認",
-                        'message' => "{$area}で{$activeName}が発表されています。安否状況を報告してください。",
-                    ]);
+                    if (!$dryRun) {
+                        (new SafetyCheck())->createProduction([
+                            'disaster_key' => $key,
+                            'title' => "{$area} 大雨警報による安否確認",
+                            'message' => "{$area}で{$activeName}が発表されています。安否状況を報告してください。",
+                        ]);
 
-                    WeatherWarningState::updateOrCreate(
-                        [
-                            'area_code' => $code,
-                            'warning_type' => 'heavy_rain',
-                        ],
-                        [
-                            'area_name' => $area,
-                            'warning_name' => $activeName,
-                            'is_active' => true,
-                            'active_disaster_key' => $key,
-                        ]
-                    );
+                        WeatherWarningState::updateOrCreate(
+                            [
+                                'area_code' => $code,
+                                'warning_type' => 'heavy_rain',
+                            ],
+                            [
+                                'area_name' => $area,
+                                'warning_name' => $activeName,
+                                'is_active' => true,
+                                'active_disaster_key' => $key,
+                            ]
+                        );
+                    }
                 }
-
-                continue;
             }
 
             // 洪水警報の新規作成・重複防止

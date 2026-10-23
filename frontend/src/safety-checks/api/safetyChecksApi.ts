@@ -110,3 +110,10 @@ export const getSafetyCheckResponses = async (
 
   return response.data.responses
 }
+
+export const getMyUnansweredSafetyChecks = async (): Promise<SafetyCheck[]> => {
+  const response = await api.get<SafetyCheck[]>(
+    '/api/my/unanswered-safety-checks'
+  )
+  return response.data
+}
