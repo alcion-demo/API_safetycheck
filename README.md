@@ -16,14 +16,6 @@
 ## プロジェクト概要
 このリポジトリは、バックエンドに Laravel、フロントエンドに React + TypeScript + Vite を持つ SPA 型の安否確認アプリケーションです。
 
-確認できた実装の軸は次の通りです。
-
-- Backend: Laravel 13 を使用した API と認証基盤
-- Frontend: React 19 + TypeScript + Vite によるシングルページアプリケーション
-- 安否確認通知
-- 管理者向けユーザー管理
-
-
 ## 学習・検証目的
 - CRUD + API通信の理解
 - SPAでの認証についての理解
@@ -32,24 +24,34 @@
 
 ## 主な機能
 - CRUD + API通信
-  - 後で書き直す
+  - 安否確認の作成、管理、通知
+  - 送信: キューとスケジューラを利用した定時処理
+  - プロフィール変更
   - `AdminController` にて 管理者向けユーザー管理 API（一覧・作成・更新・削除）
 - 認証フロー
   - ユーザー認証（Fortify）
   - API 認証（Sanctum ミドルウェア適用）
+  - 権限管理: Spatie Permission
 - フロントエンド骨格（React + TypeScript + Vite + Tailwind）
 - 管理者チェック用ミドルウェア
   - ユーザー一覧取得
   - ユーザー追加
   - ユーザー更新
   - ユーザー削除
+- 一般ユーザー
+  - 安否確認の回答
+- 災害情報連携: 気象庁 XML フィードの解析
+  - 地震情報
+  - 気象警報・注意報
+  - 台風に関する情報
+  - 台風の確率情報
 
 ## 使用技術
 | カテゴリ | 使用技術 |
 | :--- | :--- |
 | **Backend** | Laravel 13 |
 | **Frontend** | React `^19.2.7`, Tailwind CSS, Node.js |
-| **Authentication / Authorization** | Fortify |
+| **Authentication / Authorization** | Fortify, Spatie Laravel Permission 8.3 |
 | **Infrastructure** | Docker Compose (App / Node / MySQL / Nginx) |
 | **OS Environment** | WSL2 (Ubuntu / Alpine Linux) |
 | **Database** | MySQL 8.x |
@@ -138,267 +140,226 @@ MAIL_ENCRYPTION=ssl
 MAIL_FROM_ADDRESS="送信元のメールアドレス"
 ```
 
-## ディレクトリ構成（主要部分）後で書き直す
+## ディレクトリ構成（主要部分）
+```text
 - compose.yaml
-- php
-  - `Dockerfile`
-- nginx
-  - `default.conf`
-- backend
-  - `artisan`
+- README.md
+- backend/
+  - artisan
   - composer.json
   - package.json
   - .env.example
-  - `routes/`
-    - web.php
-    - api.php
-  - `app/`
-    - `Http/`
-      - `Controllers/`
+  - phpunit.xml
+  - vite.config.js
+  - app/
+    - Actions/
+      - Fortify/
+        - CreateNewUser.php
+        - PasswordValidationRules.php
+        - ResetUserPassword.php
+        - UpdateUserPassword.php
+        - UpdateUserProfileInformation.php
+    - Console/
+      - Commands/
+        - InspectJmaFeeds.php
+    - Http/
+      - Controllers/
         - Controller.php
-        - `Shopping/`
-          - ShoppingController.php
-          - RecipeController.php
-        - `User/`
-          - UserController.php
-        - `Admin/`
-          - AdminUserController.php
-      - `Middleware/`
-        - Admin.php
-      - `Requests/`
-        - StoreShoppingRequest.php
-        - UpdateShoppingRequest.php
-        - SuggestionRequest.php
+        - ProfileController.php
+        - SafetyCheckController.php
+        - SafetyCheckResponseController.php
+        - UserController.php
+      - Requests/
+        - StoreSafetyCheckRequest.php
+        - StoreSafetyCheckResponseRequest.php
+        - StoreUserRequest.php
         - UpdateProfileRequest.php
-        - UpdatePasswordRequest.php
-    - `Models/`
+        - UpdateSafetyCheckRequest.php
+        - UpdateUserRequest.php
+    - Jobs/
+      - ActivateScheduledSafetyCheckJob.php
+    - Mail/
+      - SafetyCheckNotification.php
+    - Models/
+      - SafetyCheck.php
+      - SafetyCheckResponse.php
+      - TyphoonNotificationState.php
       - User.php
-      - ShoppingItem.php
-      - CurrentCart.php
-      - PurchaseLog.php
-    - `Services/`
-      - ShoppingService.php
-      - RecipeGenerator.php
-      - RecipeShareService.php
-      - UserService.php
-    - `Jobs/`
-      - GenerateRecipeJob.php
-    - `Ai/`
-      - `Agents/`
-        - NoblemanAgent.php
-    - `Providers/`
+      - WeatherWarningState.php
+    - Providers/
       - AppServiceProvider.php
       - FortifyServiceProvider.php
-    - `Actions/`
-      - `Fortify/`
-        - CreateNewUser.php
-        - UpdateUserPassword.php
-        - ResetUserPassword.php
-        - UpdateUserProfileInformation.php
-        - PasswordValidationRules.php
-    - `Enums/`
-      - ShopType.php
-  - `resources/`
-    - `views/`
+  - bootstrap/
+  - config/
+  - database/
+    - factories/
+    - migrations/
+    - seeders/
+  - lang/
+  - public/
+  - resources/
+    - css/
+    - js/
+    - views/
+      - emails/
       - welcome.blade.php
-  - `database/`
-    - `migrations/`
-- frontend
-  - package.json
+  - routes/
+    - api.php
+    - console.php
+    - web.php
+  - storage/
+  - tests/
+- frontend/
   - README.md
-  - `src/`
-    - `components/`
-      - `Layout/`
-        - AppLayout.tsx
-      - `Header.tsx`
-      - `BottomNav.tsx`
-      - `ApplicationLogo.tsx`
-    - `pages/`
-      - `shopping/`
-        - ShoppingPage.tsx
-        - ListSection.tsx
-        - EditForm.tsx
-        - HistorySection.tsx
-        - `recipe/`
-          - RecipeSection.tsx
-          - RecipeCard.tsx
-          - RecipeSharePage.tsx
-      - `Admin/`
-        - `User/`
-          - UserForm.tsx
-          - UserItem.tsx
-          - UserEditForm.tsx
-        - AdminUserPage.tsx
-      - `Settings/`
-        - SettingsPage.tsx
-    - `utils/`
-      - axios.ts
+  - package.json
+  - public/
+    - favicon.svg
+    - icons.svg
+  - src/
     - App.tsx
-    - `main.tsx`
-    - `login.tsx`
-    - `Register.tsx`
-  - `public/`
-
+    - Register.tsx
+    - index.css
+    - login.tsx
+    - main.tsx
+    - api/
+    - assets/
+    - components/
+      - layout/
+        - AuthenticatedLayout.tsx
+    - pages/
+      - Admin/
+        - Dashboard/
+        - SafetyCheck/
+        - User/
+      - Auth/
+      - Home/
+      - Profile/
+    - routes/
+    - safety-checks/
+      - ResponsePage.tsx
+      - api/
+      - components/
+- nginx/
+  - default.conf
+- php/
+  - Dockerfile
+- mysql/
+```
 ## 設計・実装の特徴設計・実装の特徴
-- バックエンドはサービス層とモデル層に分離
-  - ShoppingService
-  - UserService
-  - RecipeGenerator
-  - RecipeShareService
-- モデルでスコープとキャストを定義
-- 後で書き直す
-- フロントエンドは状態管理を React の useState / useEffect で実施
-- フロントエンドは React Hooks でシンプルに API 連携し、CRUD 操作を実装
+- Laravel を中心に API とジョブ処理を構築
+  - `backend/routes/api.php`
+- React + TypeScript で SPA を実装
+- 管理者権限と一般ユーザーの認可を明確に分離
+  - `User`
+  - `HasRoles`
+  - `HasApiTokens`
+- 気象庁 XML から災害情報を取り込み、安否確認へ変換
+  - `app:inspect-jma-feeds`
+  - `SafetyCheckController`
+  - `createProduction()`
+- キューとスケジューラで通知処理を非同期化
+  - `ActivateScheduledSafetyCheckJob`
+  - `SafetyCheckNotification`
+
+以下の3点を重視
+- API と SPA の分離による明確な責務分離
+- 管理者と一般ユーザーの認証・認可を安全に扱うこと
+- 災害情報の取得と安否確認の起票を自動化すること
 
 ---
 
-## 処理の流れ後で書き直す
+## 処理の流れ
+
 ```mermaid
 graph TD
-    A[React Frontend] -->|ログイン/登録/API呼び出し| B[Axios]
-    B --> C[Laravel API Routes]
-    C --> D[ShoppingController]
-    C --> E[AdminUserController]
-    C --> F[UserController]
-    C --> G[RecipeController]
+    A[Frontend React/Vite] -->|API calls| B[Laravel API routes]
+    B --> C[SafetyCheckController]
+    B --> D[SafetyCheckResponseController]
+    B --> E[UserController / ProfileController]
 
-    D --> H[ShoppingService]
-    H --> I[CurrentCart]
-    H --> J[PurchaseLog]
-    H --> K[ShoppingItem]
+    C --> F[SafetyCheck Model]
+    D --> G[SafetyCheckResponse Model]
+    F --> H[(safety_checks)]
+    G --> I[(safety_check_responses)]
 
-    E --> L[UserService]
-    L --> M[User]
+    J[Scheduled Job: ActivateScheduledSafetyCheckJob] --> F
+    F --> K[Mail: SafetyCheckNotification]
+    K --> L[Queue / Mailer]
 
-    G --> N[GenerateRecipeJob]
-    N --> O[RecipeGenerator]
-    O --> P[NoblemanAgent]
-    P --> Q[AI Provider]
-    N --> R[Cache]
+    M[JMA XML Feed] --> N[InspectJmaFeeds Console Command]
+    N --> O[Earthquake / Typhoon / Weather Warning logic]
+    O --> F
+    O --> P[WeatherWarningState]
+    O --> Q[TyphoonNotificationState]
 
-    C --> S[Fortify + Sanctum]
-    S --> T[User Auth]
-
-    I --> U[(MySQL / SQLite depending on env)]
-    J --> U
-    M --> U
+    R[Docker Compose] --> S[app / scheduler / queue / db / nginx / node]
 ```
-## クラス構成図後で書き直す
+
+## クラス構成図
+
 ```mermaid
 classDiagram
     class User {
-        +id
-        +name
-        +email
-        +password
-        +is_admin
-        +casts()
+        +getUserList(search)
+        +createUser(data)
+        +updateUser(data)
     }
 
-    class ShoppingItem {
-        +id
-        +user_id
-        +name
-        +is_active
-        +recentPurchaseLogs()
-        +scopeActive()
-        +scopeForUser()
+    class SafetyCheck {
+        +createTraining(data)
+        +activateTraining()
+        +closeTraining()
+        +updateTraining(data)
+        +createProduction(data)
     }
 
-    class CurrentCart {
-        +id
-        +shopping_item_id
-        +price
-        +quantity
-        +shop_type
-        +item()
-        +scopeForUser()
+    class SafetyCheckResponse {
+        +createResponse(safetyCheckId, userId, data)
+        +getResponsesBySafetyCheckId(safetyCheckId)
     }
 
-    class PurchaseLog {
-        +id
-        +shopping_item_id
-        +price
-        +quantity
-        +shop_type
-        +purchased_at
-        +item()
-        +scopeForUser()
-        +getPurchasedDateStringAttribute()
-        +getFrequentItems()
-        +getRecentPurchaseIn3Days()
-    }
-
-    class ShoppingController {
+    class SafetyCheckController {
         +index()
-        +store()
-        +update()
-        +destroy()
-        +purchase()
+        +show(id)
+        +store(request)
+        +update(request, id)
+        +destroy(id)
+        +activate(id)
+        +close(id)
+        +closeProduction(id)
+        +unanswered(request)
     }
 
-    class AdminUserController {
-        +index()
-        +store()
-        +update()
-        +destroy()
+    class SafetyCheckResponseController {
+        +index(id)
+        +store(request, id)
     }
 
-    class UserController {
-        +update()
-        +destroy()
-        +updatePassword()
-    }
-
-    class RecipeController {
-        +store()
-        +show()
-        +shared()
-    }
-
-    class ShoppingService {
-        +savePurchase()
-        +recordPurchase()
-        +deleteCart()
-        +isInvalid()
-        +getRecentPurchasedAt()
-        +updateCart()
-    }
-
-    class UserService {
-        +createUser()
-        +userList()
-    }
-
-    class RecipeGenerator {
-        +generate()
-    }
-
-    class NoblemanAgent {
-        +instructions()
-        +messages()
-        +tools()
-        +schema()
-    }
-
-    class GenerateRecipeJob {
+    class ActivateScheduledSafetyCheckJob {
         +handle()
     }
 
-    class RecipeShareService {
-        +encode()
-        +decode()
+    class InspectJmaFeeds {
+        +handle()
+        +inspectEarthquake(xpath)
+        +inspectTyphoonProbability(xpath)
+        +inspectWeatherWarnings(xpath)
     }
 
-    User --> ShoppingItem
-    ShoppingItem --> CurrentCart
-    ShoppingItem --> PurchaseLog
-    ShoppingController --> ShoppingService
-    AdminUserController --> UserService
-    RecipeController --> ShoppingService
-    RecipeController --> RecipeShareService
-    GenerateRecipeJob --> RecipeGenerator
-    RecipeGenerator --> NoblemanAgent
+    class WeatherWarningState
+    class TyphoonNotificationState
+    class SafetyCheckNotification
+
+    User --> SafetyCheckResponse
+    SafetyCheck --> SafetyCheckResponse
+    SafetyCheckController --> SafetyCheck
+    SafetyCheckResponseController --> SafetyCheckResponse
+    ActivateScheduledSafetyCheckJob --> SafetyCheck
+    InspectJmaFeeds --> SafetyCheck
+    InspectJmaFeeds --> WeatherWarningState
+    InspectJmaFeeds --> TyphoonNotificationState
+    SafetyCheck --> SafetyCheckNotification
 ```
 ## 今後の改善予定
-- 後で書き直す
+- 台風：進路・予報情報の解析処理はある一方、台風確率情報の本番通知・状態更新は未実装。
+- 台風のどの情報を警戒対象にするか、通知条件・状態管理・重複通知をどうするか整理する。

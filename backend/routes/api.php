@@ -64,3 +64,8 @@ Route::get(
     'safety-checks/{id}/responses',
     [SafetyCheckResponseController::class, 'index']
 )->middleware(['auth:sanctum', 'role:admin']);
+
+Route::get(
+    '/my/unanswered-safety-checks',
+    [SafetyCheckController::class, 'unanswered']
+)->middleware('auth:sanctum');

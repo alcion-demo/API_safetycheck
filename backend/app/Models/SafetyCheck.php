@@ -96,6 +96,7 @@ class SafetyCheck extends Model
     }
 
 
+
     public function createProduction(array $data): self
     {
         if (empty($data['disaster_key'])) {
@@ -104,21 +105,28 @@ class SafetyCheck extends Model
             );
         }
 
-        $safetyCheck = self::firstOrCreate(
-            ['disaster_key' => $data['disaster_key']],
-            [
-                'type' => 'production',
-                'title' => $data['title'],
-                'message' => $data['message'],
-                'scheduled_at' => null,
-                'status' => 'active',
-                'started_at' => now(),
-                'ended_at' => null,
-            ]
-        );
+        $safetyCheck = self::firstOrNew([
+            'disaster_key' => $data['disaster_key'],
+        ]);
+
+        $isNew = ! $safetyCheck->exists;
+
+        // 新規作成・既存レコードの両方で本文を反映する
+        $safetyCheck->type = 'production';
+        $safetyCheck->title = $data['title'];
+        $safetyCheck->message = $data['message'];
+
+        if ($isNew) {
+            $safetyCheck->scheduled_at = null;
+            $safetyCheck->status = 'active';
+            $safetyCheck->started_at = now();
+            $safetyCheck->ended_at = null;
+        }
+
+        $safetyCheck->save();
 
         // 新規作成された場合だけ、登録済みユーザーへ回答依頼メールを送信
-        if ($safetyCheck->wasRecentlyCreated) {
+        if ($isNew) {
             User::whereNotNull('email')
                 ->where('email', '!=', '')
                 ->each(function (User $user) use ($safetyCheck) {

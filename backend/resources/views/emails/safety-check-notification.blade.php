@@ -1,6 +1,8 @@
 <h1>{{ $title }}</h1>
 
-<p>{{ $body }}</p>
+<div>
+    {!! nl2br(e($body)) !!}
+</div>
 
 <p>
     <a href="{{ $responseUrl }}">安否確認報告を開く</a>
