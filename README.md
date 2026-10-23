@@ -271,54 +271,93 @@ MAIL_FROM_ADDRESS="送信元のメールアドレス"
 ## 処理の流れ
 
 ```mermaid
-flowchart LR
-    A[User Admin] --> B[React Frontend]
-    B --> C[Laravel API]
-    C --> D[Sanctum Auth]
-    D --> E[UserController]
-    D --> F[SafetyCheckController]
-    D --> G[SafetyCheckResponseController]
+graph TD
+    A[Frontend React/Vite] -->|API calls| B[Laravel API routes]
+    B --> C[SafetyCheckController]
+    B --> D[SafetyCheckResponseController]
+    B --> E[UserController / ProfileController]
 
-    F --> H[SafetyCheck Model]
-    G --> I[SafetyCheckResponse Model]
-    H --> J[Create safety checks]
-    J --> K[Mail queue]
+    C --> F[SafetyCheck Model]
+    D --> G[SafetyCheckResponse Model]
+    F --> H[(safety_checks)]
+    G --> I[(safety_check_responses)]
 
-    L[Scheduler] --> M[ActivateScheduledSafetyCheckJob]
-    M --> H
+    J[Scheduled Job: ActivateScheduledSafetyCheckJob] --> F
+    F --> K[Mail: SafetyCheckNotification]
+    K --> L[Queue / Mailer]
 
-    N[Scheduler] --> O[inspect-jma-feeds]
-    O --> P[JMA XML feed]
-    P --> Q[Earthquake Weather Typhoon]
-    Q --> R[createProduction]
-    Q --> S[State models]
+    M[JMA XML Feed] --> N[InspectJmaFeeds Console Command]
+    N --> O[Earthquake / Typhoon / Weather Warning logic]
+    O --> F
+    O --> P[WeatherWarningState]
+    O --> Q[TyphoonNotificationState]
+
+    R[Docker Compose] --> S[app / scheduler / queue / db / nginx / node]
 ```
 
 ## クラス構成図
 
 ```mermaid
 classDiagram
-    class User
-    class SafetyCheck
-    class SafetyCheckResponse
+    class User {
+        +getUserList(search)
+        +createUser(data)
+        +updateUser(data)
+    }
+
+    class SafetyCheck {
+        +createTraining(data)
+        +activateTraining()
+        +closeTraining()
+        +updateTraining(data)
+        +createProduction(data)
+    }
+
+    class SafetyCheckResponse {
+        +createResponse(safetyCheckId, userId, data)
+        +getResponsesBySafetyCheckId(safetyCheckId)
+    }
+
+    class SafetyCheckController {
+        +index()
+        +show(id)
+        +store(request)
+        +update(request, id)
+        +destroy(id)
+        +activate(id)
+        +close(id)
+        +closeProduction(id)
+        +unanswered(request)
+    }
+
+    class SafetyCheckResponseController {
+        +index(id)
+        +store(request, id)
+    }
+
+    class ActivateScheduledSafetyCheckJob {
+        +handle()
+    }
+
+    class InspectJmaFeeds {
+        +handle()
+        +inspectEarthquake(xpath)
+        +inspectTyphoonProbability(xpath)
+        +inspectWeatherWarnings(xpath)
+    }
+
     class WeatherWarningState
     class TyphoonNotificationState
-    class SafetyCheckController
-    class SafetyCheckResponseController
-    class ProfileController
-    class UserController
-    class InspectJmaFeeds
-    class ActivateScheduledSafetyCheckJob
     class SafetyCheckNotification
 
     User --> SafetyCheckResponse
     SafetyCheck --> SafetyCheckResponse
     SafetyCheckController --> SafetyCheck
     SafetyCheckResponseController --> SafetyCheckResponse
+    ActivateScheduledSafetyCheckJob --> SafetyCheck
     InspectJmaFeeds --> SafetyCheck
     InspectJmaFeeds --> WeatherWarningState
     InspectJmaFeeds --> TyphoonNotificationState
-    ActivateScheduledSafetyCheckJob --> SafetyCheck
     SafetyCheck --> SafetyCheckNotification
 ```
 ## 今後の改善予定
